@@ -3,7 +3,7 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge
+from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge, Edge
 from cocotb.types import Logic
 from cocotb.types import LogicArray
 
@@ -175,10 +175,10 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80) # write 50% duty cycle 
 
     # measure pwm freq
-    await dut.uo_out.value_change
+    await Edge(dut.uo_out)
     start_time = cocotb.utils.get_sim_time(units="ns")
 
-    await dut.uo_out.value_change
+    await Edge(dut.uo_out)
     end_time = cocotb.utils.get_sim_time(units="ns")
 
     pwm_freq = (0.5/(end_time - start_time)) * pow(10, 9)
