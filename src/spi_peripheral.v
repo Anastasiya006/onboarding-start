@@ -23,10 +23,10 @@ module spi_peripheral (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            spi_counter <= 1'b0;
-            sclk_sync <= 1'b0;
+            spi_counter <= 5'b0;
+            sclk_sync <= 2'b0;
             cs_sync <= 2'b11;
-            copi_sync <= 1'b0;
+            copi_sync <= 2'b0;
             en_reg_out_7_0 <= 8'h0;
             en_reg_out_15_8 <= 8'h0;
             en_reg_pwm_7_0 <= 8'h0;
@@ -55,29 +55,29 @@ module spi_peripheral (
                 shift_reg <= {shift_reg[14:0], copi_sync[1]}; 
             end else if (!cs_sync[1] && cs_prev) begin
                 // reset, transaction starting
-                shift_reg <= 1'b0;
-                spi_counter <= 1'b0;
+                shift_reg <= 16'b0;
+                spi_counter <= 5'b0;
             end else if (spi_counter == 5'b10000) begin
-                spi_counter <= 1'b0; // reset counter
+                spi_counter <= 5'b0; // reset counter
 
                 if (shift_reg[15]) begin // check read/write bit
-                    if (shift_reg[14:8] == 8'h0) begin
+                    if (shift_reg[14:8] == 7'h0) begin
                         en_reg_out_7_0 <= shift_reg[7:0];
                     end
 
-                    if (shift_reg[14:8] == 8'h1) begin
+                    if (shift_reg[14:8] == 7'h1) begin
                         en_reg_out_15_8 <= shift_reg[7:0];
                     end
 
-                    if (shift_reg[14:8] == 8'h2) begin
+                    if (shift_reg[14:8] == 7'h2) begin
                         en_reg_pwm_7_0 <= shift_reg[7:0];
                     end
 
-                    if (shift_reg[14:8] == 8'h3) begin
+                    if (shift_reg[14:8] == 7'h3) begin
                         en_reg_pwm_15_8 <= shift_reg[7:0];
                     end
 
-                    if (shift_reg[14:8] == 8'h4) begin
+                    if (shift_reg[14:8] == 7'h4) begin
                         pwm_duty_cycle <= shift_reg[7:0];
                     end
                 end

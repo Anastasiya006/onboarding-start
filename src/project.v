@@ -5,6 +5,7 @@
 
 `default_nettype none
 
+/* verilator lint_off DECLFILENAME */
 module tt_um_uwasic_onboarding_anastasiya_volgina (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
