@@ -9,11 +9,11 @@ from cocotb.types import LogicArray
 
 async def await_half_sclk(dut):
     """Wait for the SCLK signal to go high or low."""
-    start_time = cocotb.utils.get_sim_time(unit="ns")
+    start_time = cocotb.utils.get_sim_time(units="ns")
     while True:
         await ClockCycles(dut.clk, 1)
         # Wait for half of the SCLK period (10 us)
-        if (start_time + 100*100*0.5) < cocotb.utils.get_sim_time(unit="ns"):
+        if (start_time + 100*100*0.5) < cocotb.utils.get_sim_time(units="ns"):
             break
     return
 
@@ -87,7 +87,7 @@ async def test_spi(dut):
     dut._log.info("Start SPI test")
 
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, unit="ns")
+    clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -154,7 +154,7 @@ async def test_pwm_freq(dut):
     dut._log.info("Start PWM Frequency test")
     
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, unit="ns")
+    clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -176,10 +176,10 @@ async def test_pwm_freq(dut):
 
     # measure pwm freq
     await dut.uo_out.value_change
-    start_time = cocotb.utils.get_sim_time(unit="ns")
+    start_time = cocotb.utils.get_sim_time(units="ns")
 
     await dut.uo_out.value_change
-    end_time = cocotb.utils.get_sim_time(unit="ns")
+    end_time = cocotb.utils.get_sim_time(units="ns")
 
     pwm_freq = (0.5/(end_time - start_time)) * pow(10, 9)
 
@@ -195,7 +195,7 @@ async def test_pwm_duty(dut):
     dut._log.info("Start PWM Duty test")
         
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, unit="ns")
+    clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -220,13 +220,13 @@ async def test_pwm_duty(dut):
 
     # Measure one complete PWM period using edge triggers
     await RisingEdge(dut.uo_out_0)
-    t1 = cocotb.utils.get_sim_time(unit="ns")
+    t1 = cocotb.utils.get_sim_time(units="ns")
 
     await FallingEdge(dut.uo_out_0)
-    t2 = cocotb.utils.get_sim_time(unit="ns")
+    t2 = cocotb.utils.get_sim_time(units="ns")
 
     await RisingEdge(dut.uo_out_0)
-    t3 = cocotb.utils.get_sim_time(unit="ns")
+    t3 = cocotb.utils.get_sim_time(units="ns")
 
     # Calculate duty cycle
     high_time = t2 - t1
