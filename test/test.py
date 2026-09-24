@@ -3,18 +3,17 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge
 from cocotb.types import Logic
 from cocotb.types import LogicArray
 
 async def await_half_sclk(dut):
     """Wait for the SCLK signal to go high or low."""
-    start_time = cocotb.utils.get_sim_time(units="ns")
+    start_time = cocotb.utils.get_sim_time(unit="ns")
     while True:
         await ClockCycles(dut.clk, 1)
         # Wait for half of the SCLK period (10 us)
-        if (start_time + 100*100*0.5) < cocotb.utils.get_sim_time(units="ns"):
+        if (start_time + 100*100*0.5) < cocotb.utils.get_sim_time(unit="ns"):
             break
     return
 
@@ -88,7 +87,7 @@ async def test_spi(dut):
     dut._log.info("Start SPI test")
 
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, units="ns")
+    clock = Clock(dut.clk, 100, unit="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -152,10 +151,92 @@ async def test_spi(dut):
 @cocotb.test()
 async def test_pwm_freq(dut):
     # Write your test here
+    dut._log.info("Start PWM Frequency test")
+    
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    # write 50% pwm to pin 0 on output 
+    await send_spi_transaction(dut, 1, 0x00, 0x01) # enable out
+    await send_spi_transaction(dut, 1, 0x02, 0x01) # enable pwm 
+    await send_spi_transaction(dut, 1, 0x04, 0x80) # write 50% duty cycle 
+
+    # measure pwm freq
+    await dut.uo_out.value_change
+    start_time = cocotb.utils.get_sim_time(unit="ns")
+
+    await dut.uo_out.value_change
+    end_time = cocotb.utils.get_sim_time(unit="ns")
+
+    pwm_freq = (0.5/(end_time - start_time)) * pow(10, 9)
+
+    assert(3000 * 0.99 <= pwm_freq <= 3000 * 1.01)
+
     dut._log.info("PWM Frequency test completed successfully")
 
 
 @cocotb.test()
 async def test_pwm_duty(dut):
     # Write your test here
+
+    dut._log.info("Start PWM Duty test")
+        
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    # Test 75% duty cycle on pin 0
+    await send_spi_transaction(dut, 1, 0x00, 0x01)  # enable out
+    await send_spi_transaction(dut, 1, 0x02, 0x01)  # enable pwm
+    await send_spi_transaction(dut, 1, 0x04, 0xC0)  # write 75% duty cycle (192/255)
+
+    # Wait for signal to stabilize
+    await ClockCycles(dut.clk, 4000)
+
+    # Measure one complete PWM period using edge triggers
+    await RisingEdge(dut.uo_out_0)
+    t1 = cocotb.utils.get_sim_time(unit="ns")
+
+    await FallingEdge(dut.uo_out_0)
+    t2 = cocotb.utils.get_sim_time(unit="ns")
+
+    await RisingEdge(dut.uo_out_0)
+    t3 = cocotb.utils.get_sim_time(unit="ns")
+
+    # Calculate duty cycle
+    high_time = t2 - t1
+    total_period = t3 - t1
+    measured_duty = (high_time / total_period) * 100
+    expected_duty = (0xC0 / 256) * 100
+
+    dut._log.info(f"Measured duty cycle: {measured_duty:.1f}%")
+
+    # Allow 2% tolerance
+    assert abs(measured_duty - expected_duty) < 2, f"Duty cycle is {measured_duty:.1f}%, expected {expected_duty:.1f}% +/- 2%"
+
     dut._log.info("PWM Duty Cycle test completed successfully")

@@ -22,6 +22,16 @@ module tb ();
   wire [7:0] uo_out;
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
+
+  // Expose individual output bits for edge triggers
+  wire uo_out_0 = uo_out[0];
+  wire uo_out_1 = uo_out[1];
+  wire uo_out_2 = uo_out[2];
+  wire uo_out_3 = uo_out[3];
+  wire uo_out_4 = uo_out[4];
+  wire uo_out_5 = uo_out[5];
+  wire uo_out_6 = uo_out[6];
+  wire uo_out_7 = uo_out[7];
 `ifdef GL_TEST
   wire VPWR = 1'b1;
   wire VGND = 1'b0;
