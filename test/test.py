@@ -239,4 +239,26 @@ async def test_pwm_duty(dut):
     # Allow 2% tolerance
     assert abs(measured_duty - expected_duty) < 2, f"Duty cycle is {measured_duty:.1f}%, expected {expected_duty:.1f}% +/- 2%"
 
+    # Test 0% duty cycle (should be always low)
+    await send_spi_transaction(dut, 1, 0x04, 0x00)  # write 0% duty cycle
+    await ClockCycles(dut.clk, 4000)
+
+    # Check that signal stays low for multiple periods
+    for _ in range(10):
+        assert dut.uo_out_0.value == 0, "Signal should be low for 0% duty cycle"
+        await ClockCycles(dut.clk, 100)
+
+    dut._log.info("0% duty cycle test passed")
+
+    # Test 100% duty cycle (should be always high)
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)  # write 100% duty cycle
+    await ClockCycles(dut.clk, 4000)
+
+    # Check that signal stays high for multiple periods
+    for _ in range(10):
+        assert dut.uo_out_0.value == 1, "Signal should be high for 100% duty cycle"
+        await ClockCycles(dut.clk, 100)
+
+    dut._log.info("100% duty cycle test passed")
+
     dut._log.info("PWM Duty Cycle test completed successfully")
